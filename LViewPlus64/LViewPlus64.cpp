@@ -41,13 +41,11 @@ std::wstring getComputerName() {
 int main()
 {
 	printf(
-		"	:::    :::     ::: ::::::::::: :::::::::: :::       ::: \n"
-		"	:+:    :+:     :+:     :+:     :+:        :+:       :+: \n"
-		"	+:+    +:+     +:+     +:+     +:+        +:+       +:+ \n"
-		"	+#+    +#+     +:+     +#+     +#++:++#   +#+  +:+  +#+ \n"
-		"	+#+     +#+   +#+      +#+     +#+        +#+ +#+#+ +#+ \n"
-		"	#+#      #+#+#+#       #+#     #+#         #+#+# #+#+#  \n"
-		"	########## ###     ########### ##########   ###   ###   \n\n"
+		"     ██ ███    ███ ██████  ███████ \n"
+		"     ██ ████  ████ ██   ██    ███  \n"
+		"     ██ ██ ████ ██ ██████    ███   \n"
+		"██   ██ ██  ██  ██ ██   ██  ███    \n"
+		" █████  ██      ██ ██   ██ ███████ \n\n"
 	);
 
 	Overlay overlay = Overlay();
@@ -58,7 +56,7 @@ int main()
 		PyImport_AppendInittab("LViewPlus64", &PyInit_LViewPlus64);
 		Py_Initialize();
 
-		printf("[+] Initialising imgui and directx UI\n");
+		printf("[+] Initializing imgui and directx UI\n");
 		overlay.Init();
 
 		printf("[+] Loading unit data\n");
@@ -124,7 +122,7 @@ void MainLoop(Overlay& overlay, LeagueMemoryReader& reader) {
 				reader.MakeSnapshot(memSnapshot);
 
 				// If the game started
-				if (memSnapshot.gameTime > 2.f) {
+				if (memSnapshot.gameTime > 15.f) {
 					// Tell the UI that a new game has started
 					if (firstIter) {
 
