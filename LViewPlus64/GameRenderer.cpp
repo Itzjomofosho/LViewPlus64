@@ -32,7 +32,6 @@ void GameRenderer::MultiplyMatrices(float *out, float *a, int row1, int col1, fl
 }
 
 Vector2 GameRenderer::WorldToScreen(const Vector3& pos) const {
-	
 	Vector2 out = { 0.f, 0.f };
 	Vector2 screen = { (float)width, (float)height };
 	static Vector4 clipCoords;
@@ -41,8 +40,10 @@ Vector2 GameRenderer::WorldToScreen(const Vector3& pos) const {
 	clipCoords.z = pos.x * viewProjMatrix[2] + pos.y * viewProjMatrix[6] + pos.z * viewProjMatrix[10] + viewProjMatrix[14];
 	clipCoords.w = pos.x * viewProjMatrix[3] + pos.y * viewProjMatrix[7] + pos.z * viewProjMatrix[11] + viewProjMatrix[15];
 
-	if (clipCoords.w < 1.0f)
-		clipCoords.w = 1.f;
+	// Add a check to prevent division by zero
+	if (clipCoords.w == 0.0f) {
+		clipCoords.w = 0.1f; // Prevent division by zero
+	}
 
 	Vector3 M;
 	M.x = clipCoords.x / clipCoords.w;
@@ -51,10 +52,10 @@ Vector2 GameRenderer::WorldToScreen(const Vector3& pos) const {
 
 	out.x = (screen.x / 2.f * M.x) + (M.x + screen.x / 2.f);
 	out.y = -(screen.y / 2.f * M.y) + (M.y + screen.y / 2.f);
-	
 
 	return out;
 }
+
 
 Vector2 GameRenderer::WorldToMinimap(const Vector3& pos, const Vector2& wPos, const Vector2& wSize) const {
 

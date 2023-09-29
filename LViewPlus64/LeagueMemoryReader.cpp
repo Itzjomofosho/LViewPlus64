@@ -58,7 +58,7 @@ void LeagueMemoryReader::HookToProcess() {
 	HMODULE hMods[1024];
 	DWORD cbNeeded;
 	if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
-		moduleBaseAddr = (DWORD_PTR)hMods[0];
+		moduleBaseAddr = (DWORD64)hMods[0];
 	}
 	else {
 		throw WinApiException("Couldn't retrieve league base address");

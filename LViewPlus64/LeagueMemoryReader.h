@@ -38,7 +38,7 @@ private:
 	HWND                        hWindow  = NULL;
 							   
 	// Memory related		   
-	DWORD_PTR                   moduleBaseAddr    = 0;
+	DWORD64                   moduleBaseAddr    = 0;
 	DWORD                       moduleSize        = 0;
 	BOOL                        is64Bit           = FALSE;
 
