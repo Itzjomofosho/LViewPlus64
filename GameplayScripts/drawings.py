@@ -109,7 +109,7 @@ def LViewPlus64_draw_settings(game, ui):
 def draw_atk_range(game, player):
     if player.is_alive and player.is_visible and game.is_point_on_screen(player.pos):
         game.draw_circle_world(
-            player.pos, player.atkRange + player.gameplay_radius, 100, 1, Color.WHITE
+            player.pos, player.atkRange + player.gameplay_radius, 100, 1, Color.GREEN
         )
 
 
@@ -333,7 +333,7 @@ def LViewPlus64_update(game, ui):
 
     player = game.player
 
-    game.draw_text(Vec2(GetSystemMetrics(1) - 100, 0), "LViewPlus64++", Color.GREEN)
+    game.draw_text(Vec2(GetSystemMetrics(1) - 100, 0), "JMRZ Loaded", Color.GREEN)
 
     draw_recall_states(game, player)
     if attack_range:

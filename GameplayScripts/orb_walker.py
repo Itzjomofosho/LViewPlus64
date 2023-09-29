@@ -9,9 +9,9 @@ import time, json, random
 from API.summoner import *
 
 LViewPlus64_script_info = {
-    "script": "WS+ Orbwalker",
-    "author": "bckd00r",
-    "description": "Best kite machine ever!",
+    "script": "JMRZ Orbwalker",
+    "author": "JMRZ",
+    "description": "JMRZ Orbwalker",
 }
 
 lasthit_key = 45
@@ -119,6 +119,7 @@ def LViewPlus64_update(game, ui):
     global draw_killable_minion, draw_killable_minion_fade
     global attackTimer, moveTimer, humanizer
     global last
+    
     if draw_killable_minion_fade:
         drawKillableMinions(game, True)
     elif draw_killable_minion:
@@ -132,9 +133,7 @@ def LViewPlus64_update(game, ui):
         and not game.isChatOpen
         and not checkEvade()
     ):
-        # if last + 0.2 < game.time:
-        #     last = game.time
-        atk_speed = GetAttackSpeed()
+        atk_speed = GetAttackSpeed()  # Assuming GetAttackSpeed is defined in API.summoner
         c_atk_time = max(1.0 / atk_speed, kite_ping / 100)
         b_windup_time = (1.0 / atk_speed) * (
             self.basic_atk_windup / self.atk_speed_ratio
@@ -145,9 +144,10 @@ def LViewPlus64_update(game, ui):
                 game.player.atkRange + game.player.gameplay_radius,
             )
             if attackTimer.Timer() and target:
+                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time)
+                moveTimer.SetTimer(b_windup_time + 0.1)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
@@ -162,9 +162,11 @@ def LViewPlus64_update(game, ui):
         if game.is_key_down(lasthit_key):
             target = LastHitMinions(game)
             if attackTimer.Timer() and target:
+                # Draw a circle where it is clicking
+                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time)
+                moveTimer.SetTimer(b_windup_time + 0.1)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
@@ -192,9 +194,12 @@ def LViewPlus64_update(game, ui):
                 )
             )
             if attackTimer.Timer() and target:
-                game.click_at(False, game.world_to_screen(target.pos))
+                # Draw a circle where it is clicking
+                click_position = game.world_to_screen(target.pos)
+                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
+                game.click_at(False, click_position)
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time)
+                moveTimer.SetTimer(b_windup_time + 0.1)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
