@@ -144,10 +144,11 @@ def LViewPlus64_update(game, ui):
                 game.player.atkRange + game.player.gameplay_radius,
             )
             if attackTimer.Timer() and target:
-                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
+                game.click_at(False, game.world_to_screen(target.pos))
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.1)
+                moveTimer.SetTimer(b_windup_time + 0.2)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
@@ -163,10 +164,11 @@ def LViewPlus64_update(game, ui):
             target = LastHitMinions(game)
             if attackTimer.Timer() and target:
                 # Draw a circle where it is clicking
-                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
+                game.click_at(False, game.world_to_screen(target.pos))
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.1)
+                moveTimer.SetTimer(b_windup_time + 0.2)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
@@ -196,10 +198,11 @@ def LViewPlus64_update(game, ui):
             if attackTimer.Timer() and target:
                 # Draw a circle where it is clicking
                 click_position = game.world_to_screen(target.pos)
-                game.draw_circle_world(target.pos, 25, 100, 25, Color.RED)
+                game.click_at(False, click_position)
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, click_position)
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.1)
+                moveTimer.SetTimer(b_windup_time + 0.2)
             else:
                 if humanizer.Timer():
                     if moveTimer.Timer():
