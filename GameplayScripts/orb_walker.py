@@ -7,6 +7,7 @@ from commons.targeting import *
 from commons.timer import Timer
 import time, json, random
 from API.summoner import *
+from win32api import GetSystemMetrics
 
 LViewPlus64_script_info = {
     "script": "JMRZ Orbwalker",
@@ -41,8 +42,8 @@ def LViewPlus64_load_cfg(cfg):
     draw_killable_minion = cfg.get_bool("draw_killable_minion", False)
     randomize_movement = cfg.get_bool("randomize_movement", False)
     draw_killable_minion_fade = cfg.get_bool("draw_killable_minion_fade", False)
-    click_speed = cfg.get_int("click_speed", 7)
-    kite_ping = cfg.get_int("kite_ping", 20)
+    click_speed = cfg.get_int("click_speed", 10)
+    kite_ping = cfg.get_int("kite_ping", 0)
 
 
 def LViewPlus64_save_cfg(cfg):
@@ -74,7 +75,7 @@ def LViewPlus64_draw_settings(game, ui):
         laneclear_key = ui.keyselect("Laneclear key", laneclear_key)
         key_orbwalk = ui.keyselect("Orbwalk activate key", key_orbwalk)
         ui.treepop()
-    click_speed = ui.sliderint("Click speed", int(click_speed), 50, 100)
+    click_speed = ui.sliderint("Click speed", int(click_speed), 0, 50)
     kite_ping = ui.sliderint("Kite ping", int(kite_ping), 0, 100)
     randomize_movement = ui.checkbox("Randomize movement pos", randomize_movement)
     draw_killable_minion = ui.checkbox("Draw killable minions", draw_killable_minion)
@@ -107,9 +108,13 @@ def drawKillableMinions(game, fade_effect):
 attackTimer = Timer()
 moveTimer = Timer()
 humanizer = Timer()
+last_attack_time = 0
 
 last = 0
 atk_speed = 0
+current_atk_speed = 0
+current_windup = 0
+
 
 
 def LViewPlus64_update(game, ui):
@@ -118,7 +123,7 @@ def LViewPlus64_update(game, ui):
     global click_speed, kite_ping
     global draw_killable_minion, draw_killable_minion_fade
     global attackTimer, moveTimer, humanizer
-    global last
+    global last, last_attack_time, current_atk_speed, current_windup
     
     if draw_killable_minion_fade:
         drawKillableMinions(game, True)
@@ -133,11 +138,23 @@ def LViewPlus64_update(game, ui):
         and not game.isChatOpen
         and not checkEvade()
     ):
-        atk_speed = GetAttackSpeed()  # Assuming GetAttackSpeed is defined in API.summoner
-        c_atk_time = max(1.0 / atk_speed, kite_ping / 100)
+        atk_speed = GetAttackSpeed()
+        # if atk_speed is 0, set it to base attack speed or local player
+        if atk_speed == 0:
+            atk_speed = self.base_atk_speed
+        c_atk_time = (1.0 / atk_speed)
         b_windup_time = (1.0 / atk_speed) * (
             self.basic_atk_windup / self.atk_speed_ratio
         )
+
+        # Update current_atk_speed and current_windup
+        current_atk_speed = atk_speed
+        current_windup = b_windup_time
+        #draw text for current atk speed and windup at player position
+        game.draw_button(game.world_to_screen(game.player.pos), "Current Attack Speed: " + str(current_atk_speed), Color.BLACK, Color.WHITE)
+        game.draw_text(Vec2(GetSystemMetrics(1) - 100, 20), "Current Windup: " + str(current_windup), Color.GREEN)
+
+
         if game.is_key_down(key_orbwalk):
             target = game.GetBestTarget(
                 UnitTag.Unit_Champion,
@@ -148,9 +165,11 @@ def LViewPlus64_update(game, ui):
                 game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.2)
+                last_attack_time = game.time  # Record the time of the last attack
+                # set moveTimer timer to windup time + random number between 0.1 and 0.25
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
             else:
-                if humanizer.Timer():
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
                     if moveTimer.Timer():
                         if randomize_movement and target:
                             game.click_at(
@@ -159,18 +178,21 @@ def LViewPlus64_update(game, ui):
                             )
                         else:
                             game.press_right_click()
-                    humanizer.SetTimer(click_speed / 1000)
-        if game.is_key_down(lasthit_key):
-            target = LastHitMinions(game)
+                    humanizer.SetTimer(click_speed / 100)
+            target = game.GetBestTarget(
+                UnitTag.Unit_Champion,
+                game.player.atkRange + game.player.gameplay_radius,
+            )
             if attackTimer.Timer() and target:
-                # Draw a circle where it is clicking
                 game.click_at(False, game.world_to_screen(target.pos))
                 game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, game.world_to_screen(target.pos))
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.2)
+                last_attack_time = game.time  # Record the time of the last attack
+                # set moveTimer timer to windup time + random number between 0.1 and 0.25
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
             else:
-                if humanizer.Timer():
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
                     if moveTimer.Timer():
                         if randomize_movement and target:
                             game.click_at(
@@ -179,7 +201,75 @@ def LViewPlus64_update(game, ui):
                             )
                         else:
                             game.press_right_click()
-                    humanizer.SetTimer(click_speed / 1000)
+                    humanizer.SetTimer(click_speed / 100)
+            if game.is_key_down(laneclear_key):
+                LaneClear(game)
+            target = game.GetBestTarget(
+                UnitTag.Unit_Champion,
+                game.player.atkRange + game.player.gameplay_radius,
+            )
+            if attackTimer.Timer() and target:
+                game.click_at(False, game.world_to_screen(target.pos))
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
+                game.click_at(False, game.world_to_screen(target.pos))
+                attackTimer.SetTimer(c_atk_time)
+                last_attack_time = game.time  # Record the time of the last attack
+                # set moveTimer timer to windup time + random number between 0.1 and 0.25
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
+            else:
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
+                    if moveTimer.Timer():
+                        if randomize_movement and target:
+                            game.click_at(
+                                False,
+                                game.world_to_screen(GetKitePosition(game, target)),
+                            )
+                        else:
+                            game.press_right_click()
+                    humanizer.SetTimer(click_speed / 100)
+            target = game.GetBestTarget(
+                UnitTag.Unit_Champion,
+                game.player.atkRange + game.player.gameplay_radius,
+            )
+            if attackTimer.Timer() and target:
+                game.click_at(False, game.world_to_screen(target.pos))
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
+                game.click_at(False, game.world_to_screen(target.pos))
+                attackTimer.SetTimer(c_atk_time)
+                last_attack_time = game.time  # Record the time of the last attack
+                # set moveTimer timer to windup time + random number between 0.1 and 0.25
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
+            else:
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
+                    if moveTimer.Timer():
+                        if randomize_movement and target:
+                            game.click_at(
+                                False,
+                                game.world_to_screen(GetKitePosition(game, target)),
+                            )
+                        else:
+                            game.press_right_click()
+                    humanizer.SetTimer(click_speed / 100)
+        if game.is_key_down(lasthit_key):
+            target = LastHitMinions(game)
+            if attackTimer.Timer() and target:
+                game.click_at(False, game.world_to_screen(target.pos))
+                game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
+                game.click_at(False, game.world_to_screen(target.pos))
+                attackTimer.SetTimer(c_atk_time)
+                last_attack_time = game.time  # Record the time of the last attack
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
+            else:
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
+                    if moveTimer.Timer():
+                        if randomize_movement and target:
+                            game.click_at(
+                                False,
+                                game.world_to_screen(GetKitePosition(game, target)),
+                            )
+                        else:
+                            game.press_right_click()
+                    humanizer.SetTimer(click_speed / 100)
         if game.is_key_down(laneclear_key):
             target = (
                 game.GetBestTarget(
@@ -202,9 +292,10 @@ def LViewPlus64_update(game, ui):
                 game.draw_circle_world(target.pos, 30, 100, 30, Color.RED)
                 game.click_at(False, click_position)
                 attackTimer.SetTimer(c_atk_time)
-                moveTimer.SetTimer(b_windup_time + 0.2)
+                last_attack_time = game.time  # Record the time of the last attack
+                moveTimer.SetTimer(b_windup_time + random.uniform(0.1, 0.25))
             else:
-                if humanizer.Timer():
+                if humanizer.Timer() and game.time - last_attack_time >= 0.25:
                     if moveTimer.Timer():
                         if randomize_movement and target:
                             game.click_at(
@@ -213,4 +304,6 @@ def LViewPlus64_update(game, ui):
                             )
                         else:
                             game.press_right_click()
-                    humanizer.SetTimer(click_speed / 1000)
+                    humanizer.SetTimer(click_speed / 100)
+
+# ...
